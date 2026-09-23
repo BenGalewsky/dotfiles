@@ -96,6 +96,7 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias river="export KUBECONFIG=~/.kube/river"
+alias ngt="export KUBECONFIG=~/.kube/ngt"
 alias docker-desktop="export KUBECONFIG=~/.kube/config"
 alias river-cms="export KUBECONFIG=~/.kube/river-cms"
 alias funcx-prod="export KUBECONFIG=~/.kube/funcx-prod"
@@ -129,6 +130,8 @@ alias kdelk="kubectl delete job"
 alias kgitcp="kubectl get ingressroutetcp.traefik.io"
 alias kgi="kubectl get ingressroute.traefik.io"
 
+# Delete completed pods
+alias kdelcompleted='kubectl get pods --field-selector=status.phase=Succeeded -o name | xargs -r kubectl delete'
 
 # Poetry shortcuts
 alias pl="poetry lock"

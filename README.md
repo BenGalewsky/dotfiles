@@ -49,18 +49,21 @@ profile and `--endpoint-url`, and then just use `aws s3` / `s3` normally.
 CEPH_S3_CONTEXTS=(
   isgs_wetlands   "isgs_wetlands https://ceph.example.org:8080"
   odsc            "odsc https://ceph.example.org:8080"
-  remat           "remat https://ceph.example.org:8080"
+  remat           "remat https://ceph.example.org:8080 us-west-2"
 )
 ```
 
-Each entry maps a short name to `"profile endpoint-url"`, where `profile`
-must match a section in `~/.aws/credentials` or `~/.aws/config`.
+Each entry maps a short name to `"profile endpoint-url [region]"`, where
+`profile` must match a section in `~/.aws/credentials` or `~/.aws/config`.
+`region` is optional and defaults to `$CEPH_S3_DEFAULT_REGION` (`us-east-1`)
+when omitted — Ceph RGW mostly ignores the region, but some `aws s3`
+subcommands (e.g. `s3 mb`) fail without one set.
 
 **Commands:**
 
 | Command | What it does |
 | --- | --- |
-| `s3ctx <name>` | Activates a context: sets `AWS_PROFILE` and `AWS_ENDPOINT_URL` for that Ceph target, and clears any stray static credential env vars. |
+| `s3ctx <name>` | Activates a context: sets `AWS_PROFILE`, `AWS_ENDPOINT_URL`, and `AWS_DEFAULT_REGION`/`AWS_REGION` for that Ceph target, and clears any stray static credential env vars. |
 | `s3ctxs` | Lists all registered contexts, marking the active one with `*`. |
 | `s3whoami` | Shows the currently active context (profile + endpoint). |
 | `s3ctx-clear` | Clears the active context, falling back to normal AWS config/creds. |

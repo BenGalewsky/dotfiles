@@ -9,15 +9,20 @@
 # them with one command, then just use `aws s3 ...` / `s3 ...` normally.
 #
 # Add one entry below per Ceph target you use:
-#   name  "profile endpoint-url"
+#   name  "profile endpoint-url [region]"
 #
 # `profile` must match a section in ~/.aws/credentials or ~/.aws/config.
 # `endpoint-url` is the Ceph RGW endpoint, e.g. https://ceph.example.org:8080
+# `region` is optional - Ceph RGW mostly ignores it, but the AWS CLI (e.g.
+# `s3 mb`) refuses to run without one, so it defaults to
+# $CEPH_S3_DEFAULT_REGION below when omitted.
 # ---------------------------------------------------------------------------
+
+CEPH_S3_DEFAULT_REGION=us-east-1
 
 typeset -gA CEPH_S3_CONTEXTS
 CEPH_S3_CONTEXTS=(
-  isgs_wetlands   "isgs_wetlands https://taiga-dtn-s3.ncsa.illinois.edu:51016"
+  isgs_wetlands   "isgs_wetlands https://taiga-dtn-s3.ncsa.illinois.edu:51014"
   odsc            "odsc https://taiga-dtn-s3.ncsa.illinois.edu:51016"
   remat           "remat https://taiga-dtn-s3.ncsa.illinois.edu:51016"
 )
@@ -44,14 +49,19 @@ s3ctx() {
   # awsenv/token helpers) so they can't shadow the profile we're selecting.
   unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
 
-  local profile="${entry%% *}"
-  local endpoint="${entry#* }"
+  local -a parts
+  parts=(${=entry})
+  local profile="${parts[1]}"
+  local endpoint="${parts[2]}"
+  local region="${parts[3]:-$CEPH_S3_DEFAULT_REGION}"
 
   export AWS_PROFILE="$profile"
   export AWS_ENDPOINT_URL="$endpoint"
+  export AWS_DEFAULT_REGION="$region"
+  export AWS_REGION="$region"
   export CEPH_S3_CONTEXT="$1"
 
-  echo "s3ctx: $1 -> profile=$profile endpoint=$endpoint"
+  echo "s3ctx: $1 -> profile=$profile endpoint=$endpoint region=$region"
 }
 
 # List all registered contexts, marking the active one with `*`.
@@ -68,7 +78,7 @@ s3ctxs() {
 
 # Clear the active Ceph S3 context, falling back to normal AWS config/creds.
 s3ctx-clear() {
-  unset AWS_PROFILE AWS_ENDPOINT_URL CEPH_S3_CONTEXT
+  unset AWS_PROFILE AWS_ENDPOINT_URL AWS_DEFAULT_REGION AWS_REGION CEPH_S3_CONTEXT
   echo "s3ctx: cleared"
 }
 
@@ -77,7 +87,7 @@ s3whoami() {
   if [[ -z "$CEPH_S3_CONTEXT" ]]; then
     echo "s3whoami: no ceph s3 context set"
   else
-    echo "$CEPH_S3_CONTEXT -> profile=$AWS_PROFILE endpoint=$AWS_ENDPOINT_URL"
+    echo "$CEPH_S3_CONTEXT -> profile=$AWS_PROFILE endpoint=$AWS_ENDPOINT_URL region=$AWS_REGION"
   fi
 }
 
